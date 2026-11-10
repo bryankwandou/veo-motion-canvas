@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KREYNTIX MOTION — Interactive Generative Cinema &amp; Kinetic Canvas</title>
-  <meta name="description" content="Immersive interactive motion landing page powered by generative AI video synthesis and high-performance WebP canvas frame scrubbing.">
+  <title>KREYNTIX MOTION — 20 Gemini Veo Sequential Frame-by-Frame Kinetic Canvas</title>
+  <meta name="description" content="High-performance scroll-driven kinetic motion landing page animating 20 sequential Gemini Veo video extractions via WebP Canvas2D scrubbing.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="theme-obsidian">
-  <!-- Audio Synthesis Indicator & Navigation Header -->
+  <!-- Navigation Header -->
   <header class="studio-header">
     <div class="header-inner">
       <div class="brand-cluster">
@@ -22,16 +22,14 @@
             <polyline points="2 12 12 17 22 12"></polyline>
           </svg>
           <span class="brand-name">KREYNTIX</span>
-          <span class="brand-tag">STUDIO</span>
+          <span class="brand-tag">20 VEO SEQUENCES</span>
         </a>
       </div>
 
       <nav class="studio-nav" aria-label="Main Navigation">
-        <a href="#kinetic-hero" class="nav-link active">Motion Canvas</a>
-        <a href="#video-stream" class="nav-link">Kinetic Reel</a>
-        <a href="#cinema-gallery" class="nav-link">AI Cinema Showcase</a>
+        <a href="#kinetic-hero" class="nav-link active">Motion Canvas (20 Videos)</a>
         <a href="#pipeline-architecture" class="nav-link">Pipeline</a>
-        <a href="#motion-lab" class="nav-link">Frame Inspector</a>
+        <a href="#asset-manifest" class="nav-link">Asset Manifest (20 Videos)</a>
       </nav>
 
       <div class="header-actions">
@@ -43,17 +41,17 @@
           </span>
           <span class="btn-text" id="audio-btn-label">AMBIENT SYNTH: OFF</span>
         </button>
-        <a href="#cinema-gallery" class="cta-pill">EXPLORE REEL</a>
+        <a href="#asset-manifest" class="cta-pill">VIEW 20 ASSETS</a>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- HERO SECTION: Scroll-Driven Canvas Frame Scrubber -->
+    <!-- HERO SECTION: Continuous Scroll-Driven 20-Video Canvas Frame Scrubber -->
     <section id="kinetic-hero" class="hero-scroll-container">
       <div class="sticky-viewport">
         <!-- Interactive Canvas Stage -->
-        <canvas id="motion-canvas" width="1280" height="720" aria-label="Interactive Frame-by-Frame Motion Canvas"></canvas>
+        <canvas id="motion-canvas" width="1280" height="720" aria-label="Interactive 20-Video Sequential Motion Canvas"></canvas>
 
         <!-- Ambient Lighting Grid Overlay -->
         <div class="hud-scanlines" aria-hidden="true"></div>
@@ -61,9 +59,13 @@
 
         <!-- Telemetry HUD Header -->
         <div class="hud-top-telemetry">
-          <div class="hud-metric">
-            <span class="metric-label">ACTIVE VEO ASSET</span>
+          <div class="hud-metric hud-metric-highlight">
+            <span class="metric-label">CURRENT VIDEO SOURCE (1 OF 20)</span>
             <span class="metric-value font-mono" id="hud-active-file">gemini_generated_video_0174cf7a.mp4</span>
+          </div>
+          <div class="hud-metric">
+            <span class="metric-label">CHAPTER SEQUENCE</span>
+            <span class="metric-value font-mono" id="hud-chapter-count">01 / 20</span>
           </div>
           <div class="hud-metric">
             <span class="metric-label">FRAME INDEX</span>
@@ -77,65 +79,41 @@
             <span class="metric-label">TEMPORAL COHERENCE</span>
             <span class="metric-value font-mono" id="hud-coherence">99.4%</span>
           </div>
-          <div class="hud-metric">
-            <span class="metric-label">LATENT VECTOR</span>
-            <span class="metric-value font-mono" id="hud-step">STEP 01</span>
-          </div>
         </div>
 
-        <!-- Dynamic Contextual Captions (Synchronized to Scroll Keyframes) -->
+        <!-- Dynamic Contextual Captions (Synchronized to Active Video Chapter) -->
         <div class="hud-narrative-overlay">
-          <div class="narrative-card active" id="card-seq-1">
-            <span class="sequence-badge">SEQUENCE 01 // LATENT INITIALIZATION</span>
-            <h1 class="sequence-title">NEURAL LATENT SYNTHESIS</h1>
-            <p class="sequence-desc">
-              High-dimensional diffusion models synthesizing continuous photorealistic motion vectors from Gemini Veo generative weights.
-            </p>
-          </div>
-
-          <div class="narrative-card" id="card-seq-2">
-            <span class="sequence-badge">SEQUENCE 02 // TEMPORAL CONTINUITY</span>
-            <h2 class="sequence-title">TEMPORAL FLOW &amp; COHERENCE</h2>
-            <p class="sequence-desc">
-              Multi-frame cross-attention dynamics preserving lighting reflections, particle kinematics, and smooth continuous camera trajectory.
-            </p>
-          </div>
-
-          <div class="narrative-card" id="card-seq-3">
-            <span class="sequence-badge">SEQUENCE 03 // HIGH-FIDELITY RENDER</span>
-            <h2 class="sequence-title">LOSSLESS WEBP STREAMING</h2>
-            <p class="sequence-desc">
-              Native 24 FPS raster frames extracted via FFmpeg into optimized WebP sequence buffers, decoded at 60 FPS via Canvas2D.
+          <div class="narrative-card active" id="narrative-card">
+            <span class="sequence-badge" id="card-badge">SEQUENCE 01 // CHAPTER 01 OF 20</span>
+            <h1 class="sequence-title" id="card-title">gemini_generated_video_0174cf7a.mp4</h1>
+            <p class="sequence-desc" id="card-desc">
+              High-dimensional diffusion motion extracted via FFmpeg into progressive WebP frames (Frames 0001 - 0012). Scroll down to progress sequentially to the next video.
             </p>
           </div>
         </div>
 
-        <!-- Scrubber and Sequence Selectors -->
+        <!-- HUD Bottom Controls: 20-Video Chapter Selector + Scrubber -->
         <div class="hud-bottom-controls">
-          <!-- 25-Video Sequence Selector Drawer -->
-          <div class="hero-sequence-drawer">
-            <div class="drawer-header">
-              <span class="drawer-label">ACTIVE VEO SEQUENCE (25 ASSETS FROM COURSE DIRECTORY)</span>
-              <div class="drawer-nav">
-                <button id="hero-prev-btn" class="drawer-nav-btn" type="button" aria-label="Previous Sequence">&lt; PREV</button>
-                <span id="hero-seq-counter" class="drawer-counter font-mono">01 / 25</span>
-                <button id="hero-next-btn" class="drawer-nav-btn" type="button" aria-label="Next Sequence">NEXT &gt;</button>
-              </div>
+          <!-- 20-Video Interactive Chapter Indicators -->
+          <div class="chapter-strip-container">
+            <div class="chapter-strip-header">
+              <span class="chapter-strip-title">20 SEQUENTIAL VIDEO CHAPTERS (SCROLL PROGRESSION)</span>
+              <span class="chapter-strip-hint font-mono">CLICK ANY CHAPTER TO JUMP</span>
             </div>
-            <div class="hero-sequence-strip" id="hero-sequence-strip" role="tablist" aria-label="Select Active Video for Motion Scrubbing">
-              <!-- Populated dynamically with 25 video thumbnail chips by app.js -->
+            <div class="chapter-buttons-row" id="chapter-buttons-row" role="tablist" aria-label="Select Video Chapter">
+              <!-- 20 chapter buttons generated dynamically by app.js -->
             </div>
           </div>
 
           <!-- Interactive Manual Scrub Bar -->
           <div class="scrub-slider-container">
-            <label for="manual-frame-slider" class="visually-hidden">Scrub Video Sequence</label>
-            <input type="range" id="manual-frame-slider" min="1" max="240" value="1" step="1" aria-label="Manual Scrub Slider">
+            <label for="manual-frame-slider" class="visually-hidden">Scrub 20-Video Sequence</label>
+            <input type="range" id="manual-frame-slider" min="1" max="240" value="1" step="1" aria-label="Manual 240-Frame Scrub Slider">
             <div class="scrub-track-fill" id="scrub-track-progress"></div>
           </div>
 
           <div class="scroll-down-hint">
-            <span class="hint-text">SCROLL OR DRAG SLIDER TO PROGRESS MOTION</span>
+            <span class="hint-text">SCROLL DOWN TO ANIMATE THROUGH ALL 20 VIDEOS SEQUENTIALLY</span>
             <svg class="hint-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <polyline points="19 12 12 19 5 12"></polyline>
@@ -145,237 +123,100 @@
       </div>
     </section>
 
-    <!-- SECTION 2: Kinetic Video Stream (Ribbon / Ticker) -->
-    <section id="video-stream" class="stream-section">
-      <div class="section-container">
-        <div class="section-header">
-          <span class="sub-label">DYNAMIC KINETIC STREAM</span>
-          <h2 class="section-heading">CONTINUOUS MOTION BUFFER</h2>
-          <p class="section-subtext">
-            Multi-stream video pipeline utilizing optimized H.264 / WebP payloads rendered seamlessly across concurrent interactive viewports.
-          </p>
-        </div>
-      </div>
-
-      <!-- Marquee Row 1 (Left to Right) -->
-      <div class="marquee-track-wrapper">
-        <div class="marquee-track" id="marquee-row-a" aria-hidden="true">
-          <!-- Dynamically populated by app.js from the 20 videos -->
-        </div>
-      </div>
-
-      <!-- Marquee Row 2 (Right to Left) -->
-      <div class="marquee-track-wrapper reverse">
-        <div class="marquee-track" id="marquee-row-b" aria-hidden="true">
-          <!-- Dynamically populated by app.js from the 20 videos -->
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 3: AI Cinema Showcase (25 Generative Video Gallery) -->
-    <section id="cinema-gallery" class="gallery-section">
-      <div class="section-container">
-        <div class="section-header-row">
-          <div>
-            <span class="sub-label">CURATED COLLECTION</span>
-            <h2 class="section-heading">GENERATIVE CINEMA REEL</h2>
-            <p class="section-subtext">
-              25 high-fidelity generative video productions rendered across sci-fi, environmental, kinetic, architectural, and narrative visual domains from the Gemini Veo resource collection.
-            </p>
-          </div>
-
-          <!-- Category Filter Tabs -->
-          <div class="filter-cluster" role="tablist" aria-label="Filter Videos by Domain">
-            <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true" type="button">ALL REELS (25)</button>
-            <button class="filter-tab" data-filter="Sci-Fi &amp; Cybernetics" role="tab" aria-selected="false" type="button">SCI-FI</button>
-            <button class="filter-tab" data-filter="Atmospheric &amp; Environment" role="tab" aria-selected="false" type="button">ATMOSPHERE</button>
-            <button class="filter-tab" data-filter="Kinetic Dynamics" role="tab" aria-selected="false" type="button">KINETICS</button>
-            <button class="filter-tab" data-filter="Character &amp; Narrative" role="tab" aria-selected="false" type="button">NARRATIVE</button>
-            <button class="filter-tab" data-filter="Futuristic Architecture" role="tab" aria-selected="false" type="button">ARCHITECTURE</button>
-          </div>
-        </div>
-
-        <!-- Video Cards Grid -->
-        <div class="video-grid" id="cinema-grid">
-          <!-- Populated by JavaScript from data.js / videos.json -->
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 4: Pipeline Architecture & Engineering Workflow -->
+    <!-- SECTION 2: Pipeline Architecture & Methodology -->
     <section id="pipeline-architecture" class="pipeline-section">
       <div class="section-container">
         <div class="section-header">
           <span class="sub-label">METHODOLOGY</span>
           <h2 class="section-heading">PRODUCTION PIPELINE ARCHITECTURE</h2>
           <p class="section-subtext">
-            The technical pipeline transforming generative AI video outputs into high-performance web canvas experiences.
+            Strict adherence to the course specification: transforming 20 Gemini Veo neural diffusion videos into a lossless 240-frame WebP Canvas2D scroll experience.
           </p>
         </div>
 
         <div class="pipeline-cards-grid">
           <div class="pipeline-card">
             <div class="step-indicator">STAGE 01</div>
-            <h3 class="card-title">Concept &amp; Prompt Engineering</h3>
+            <h3 class="card-title">Folder Source Ingestion</h3>
             <p class="card-desc">
-              Establishing kinematic parameters, lighting direction, focal depth, and scene progression using structured natural language prompt schemas.
+              Direct verification and ingestion of 20 distinct MP4 video assets from the local course resource directory (gemini veo dosen resource).
             </p>
             <div class="tech-badge-row">
-              <span class="tech-badge">LLM Synthesis</span>
-              <span class="tech-badge">Camera Framing</span>
+              <span class="tech-badge">20 Veo Assets</span>
+              <span class="tech-badge">Zero Placeholders</span>
             </div>
           </div>
 
           <div class="pipeline-card">
             <div class="step-indicator">STAGE 02</div>
-            <h3 class="card-title">Diffusion Video Synthesis</h3>
+            <h3 class="card-title">FFmpeg WebP Extraction</h3>
             <p class="card-desc">
-              Rendering high-frame-rate cinematic motions through state-of-the-art diffusion models, ensuring temporal consistency and surface detail across frames.
+              Systematic extraction of 12 sequential frames per video via FFmpeg into optimized WebP buffers (240 total frames, 800px resolution, quality 80).
             </p>
             <div class="tech-badge-row">
-              <span class="tech-badge">Generative Video</span>
-              <span class="tech-badge">24 FPS Motion</span>
+              <span class="tech-badge">240 WebP Frames</span>
+              <span class="tech-badge">Lossless Pipeline</span>
             </div>
           </div>
 
           <div class="pipeline-card">
             <div class="step-indicator">STAGE 03</div>
-            <h3 class="card-title">FFmpeg Frame Extraction</h3>
+            <h3 class="card-title">Sequential Matrix Organization</h3>
             <p class="card-desc">
-              Extracting video rasters into losslessly optimized WebP frame sequences, stripping unnecessary container overhead, and organizing index matrices.
+              Mapping 240 sequential frames into 20 consecutive chapter partitions, perfectly calibrated to the document vertical scroll height.
             </p>
             <div class="tech-badge-row">
-              <span class="tech-badge">FFmpeg Scripting</span>
-              <span class="tech-badge">WebP Quantization</span>
+              <span class="tech-badge">Linear Mapping</span>
+              <span class="tech-badge">Chapter Sync</span>
             </div>
           </div>
 
           <div class="pipeline-card">
             <div class="step-indicator">STAGE 04</div>
-            <h3 class="card-title">Canvas2D Interpolation</h3>
+            <h3 class="card-title">Canvas2D Lerp Engine</h3>
             <p class="card-desc">
-              Coordinating scroll coordinates with linear interpolation (lerp) inside a 60 FPS requestAnimationFrame loop with telemetry calculation.
+              Hardware-accelerated sub-pixel linear interpolation rendering at 60 FPS, with synchronized telemetry HUD and Web Audio API synthesis.
             </p>
             <div class="tech-badge-row">
-              <span class="tech-badge">Canvas2D API</span>
-              <span class="tech-badge">Lerp Smoothing</span>
+              <span class="tech-badge">Canvas2D 60 FPS</span>
+              <span class="tech-badge">Audio Drone API</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- SECTION 5: Interactive Frame Lab & Video Inspector -->
-    <section id="motion-lab" class="lab-section">
+    <!-- SECTION 3: 20-Video Manifest & Compliance Table -->
+    <section id="asset-manifest" class="manifest-section">
       <div class="section-container">
         <div class="section-header">
-          <span class="sub-label">DIAGNOSTICS</span>
-          <h2 class="section-heading">FRAME INSPECTOR &amp; LAB</h2>
+          <span class="sub-label">ACADEMIC AUDIT</span>
+          <h2 class="section-heading">20-VIDEO ASSET MANIFEST TABLE</h2>
           <p class="section-subtext">
-            Analyze video raster metrics, frame rate parameters, resolution aspects, and container specifications across any loaded video asset.
+            Complete inventory of all 20 source videos from the course directory, mapped to their sequential frame ranges in the canvas animation.
           </p>
         </div>
 
-        <div class="lab-workbench">
-          <div class="lab-viewport-col">
-            <div class="inspector-display-wrap">
-              <video id="inspector-video-player" muted loop playsinline></video>
-              <div class="inspector-badge font-mono" id="inspector-badge-label">CLIP 01 // LOADED</div>
-            </div>
-            <div class="inspector-controls-bar">
-              <button id="inspector-play-btn" class="ctrl-btn" type="button">PLAY / PAUSE</button>
-              <input type="range" id="inspector-timeline" min="0" max="100" value="0" step="0.1" aria-label="Timeline Scrubber">
-              <span class="font-mono time-display" id="inspector-time-readout">00:00 / 00:10</span>
-            </div>
-          </div>
-
-          <div class="lab-metrics-col">
-            <h3 class="metrics-title">ASSET TELEMETRY</h3>
-            <div class="spec-table">
-              <div class="spec-row">
-                <span class="spec-label">ACTIVE TITLE</span>
-                <span class="spec-val" id="spec-title">Cybernetic Command Center</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">DOMAIN CATEGORY</span>
-                <span class="spec-val" id="spec-category">Sci-Fi &amp; Cybernetics</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">FRAME RATE</span>
-                <span class="spec-val font-mono">24.000 FPS</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">COMPRESSION</span>
-                <span class="spec-val font-mono">H.264 / WebP</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">RASTER MATRIX</span>
-                <span class="spec-val font-mono">720 x 406 (16:9)</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">HERO FRAMES</span>
-                <span class="spec-val font-mono">240 Extracted WebP</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">CONTAINER PROTOCOL</span>
-                <span class="spec-val font-mono">FastStart Progressive</span>
-              </div>
-            </div>
-
-            <div class="asset-selector-dropdown">
-              <label for="inspector-select-dropdown" class="selector-label">SELECT CLIP TO INSPECT</label>
-              <select id="inspector-select-dropdown" class="studio-select" aria-label="Select Video to Inspect">
-                <!-- Populated dynamically -->
-              </select>
-            </div>
-          </div>
+        <div class="manifest-table-wrap">
+          <table class="manifest-table" aria-label="20-Video Manifest Table">
+            <thead>
+              <tr>
+                <th scope="col">CH</th>
+                <th scope="col">SOURCE FILENAME (COURSE DIRECTORY)</th>
+                <th scope="col">FRAME RANGE</th>
+                <th scope="col">TOTAL FRAMES</th>
+                <th scope="col">FORMAT</th>
+                <th scope="col">STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="manifest-table-body">
+              <!-- Populated dynamically with all 20 video rows by app.js -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- CINEMA THEATER MODAL -->
-  <div id="cinema-modal" class="cinema-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-backdrop" id="modal-backdrop"></div>
-    <div class="modal-content-panel">
-      <div class="modal-top-bar">
-        <div class="modal-header-info">
-          <span class="modal-category-tag" id="modal-category">CATEGORY</span>
-          <h3 class="modal-title" id="modal-title">VIDEO TITLE</h3>
-        </div>
-        <button id="modal-close-btn" class="modal-close-button" type="button" aria-label="Close Theater Modal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-player-wrapper">
-        <video id="modal-video-element" playsinline></video>
-      </div>
-
-      <div class="modal-player-bar">
-        <div class="modal-controls-group">
-          <button id="modal-play-btn" class="ctrl-btn" type="button">PAUSE</button>
-          <div class="playback-rates" role="group" aria-label="Playback Speed">
-            <button class="rate-btn" data-rate="0.5" type="button">0.5x</button>
-            <button class="rate-btn active" data-rate="1" type="button">1.0x</button>
-            <button class="rate-btn" data-rate="1.5" type="button">1.5x</button>
-            <button class="rate-btn" data-rate="2" type="button">2.0x</button>
-          </div>
-        </div>
-
-        <div class="modal-timeline-wrap">
-          <input type="range" id="modal-scrub-input" min="0" max="100" value="0" step="0.1" aria-label="Seek Video Timeline">
-        </div>
-
-        <div class="modal-telemetry-tag font-mono" id="modal-time-tag">
-          00:00 / 00:10
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- STUDIO FOOTER -->
   <footer class="studio-footer">
@@ -390,25 +231,23 @@
           <span class="brand-name">KREYNTIX MOTION STUDIO</span>
         </div>
         <p class="footer-tagline">
-          Advanced generative motion design &amp; scroll-driven kinetic web experiences. Built strictly adhering to native web standards and performance best practices.
+          Sequential frame-by-frame kinetic motion canvas landing page. Built with 20 Gemini Veo neural diffusion videos from the course resource folder.
         </p>
       </div>
 
       <div class="footer-links-col">
         <span class="footer-col-title">SECTIONS</span>
-        <a href="#kinetic-hero">Motion Canvas</a>
-        <a href="#video-stream">Kinetic Reel</a>
-        <a href="#cinema-gallery">Cinema Showcase</a>
+        <a href="#kinetic-hero">Motion Canvas (20 Videos)</a>
         <a href="#pipeline-architecture">Pipeline Architecture</a>
-        <a href="#motion-lab">Frame Inspector</a>
+        <a href="#asset-manifest">20-Video Manifest</a>
       </div>
 
       <div class="footer-links-col">
-        <span class="footer-col-title">TECHNOLOGY</span>
-        <span class="footer-note">HTML5 Canvas2D</span>
-        <span class="footer-note">WebP Frame Extraction</span>
-        <span class="footer-note">Web Audio API Synthesis</span>
-        <span class="footer-note">Linear Interpolation (Lerp)</span>
+        <span class="footer-col-title">SPECIFICATION</span>
+        <span class="footer-note">20 Course Videos</span>
+        <span class="footer-note">240 Extracted WebP Frames</span>
+        <span class="footer-note">Top-to-Bottom Scroll Engine</span>
+        <span class="footer-note">Zero Raw Video Players</span>
       </div>
     </div>
 
@@ -421,7 +260,7 @@
   </footer>
 
   <!-- Embedded Data & Application Logic -->
-  <script src="data.js"></script>
+  <script src="chapters.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

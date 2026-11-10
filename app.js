@@ -1,31 +1,24 @@
 /**
- * KREYNTIX MOTION STUDIO — INTERACTIVE CLIENT ENGINE
- * Pure vanilla ES6+ architecture for high-performance canvas scrubbing & generative cinema.
- * Features 25 active Gemini Veo video sequences directly extracted from the course directory.
+ * KREYNTIX MOTION STUDIO — 20-VIDEO SEQUENTIAL CANVAS SCRUBBING ENGINE
+ * 
+ * Animates 20 distinct Gemini Veo video extractions (240 WebP frames)
+ * sequentially from top to bottom as the user scrolls down the webpage.
+ * Zero raw video players: 100% Canvas2D frame scrubbing.
  */
 
 (function () {
   'use strict';
 
   /* ==========================================================================
-     SEQUENCE CONFIGURATION (100% GEMINI VEO COURSE ASSET)
+     CONFIGURATION
      ========================================================================== */
-  const SEQUENCE_CONFIG = {
+  const CONFIG = {
     totalFrames: 240,
-    dir: 'frames/',
+    framesPerChapter: 12,
+    totalChapters: 20,
+    framesDir: 'frames/',
     prefix: 'frame_',
-    ext: '.webp',
-    badge: 'SEQUENCE 01 // LATENT INITIALIZATION',
-    titles: [
-      'NEURAL LATENT SYNTHESIS',
-      'TEMPORAL FLOW & COHERENCE',
-      'LOSSLESS WEBP STREAMING'
-    ],
-    descriptions: [
-      'High-dimensional diffusion models synthesizing continuous photorealistic motion vectors from Gemini Veo generative weights.',
-      'Multi-frame cross-attention dynamics preserving lighting reflections, particle kinematics, and smooth continuous camera trajectory.',
-      'Native 24 FPS raster frames extracted via FFmpeg into optimized WebP sequence buffers, decoded at 60 FPS via Canvas2D.'
-    ]
+    ext: '.webp'
   };
 
   /* ==========================================================================
@@ -37,23 +30,12 @@
     images: new Map(),
     loadedCount: 0,
     scrollProgress: 0,
+    activeChapterIndex: 0,
+    chapters: window.KREYNTIX_CHAPTERS || [],
     audioActive: false,
     audioCtx: null,
-    audioNodes: null,
-    videosData: [],
-    activeCategory: 'all',
-    activeModalVideo: null,
-    inspectorVideo: null,
-    activeHeroIndex: 0,
-    scrubVideo: null,
-    isVideoMode: false
+    audioNodes: null
   };
-
-  // Dedicated offscreen video element for real-time Hero scrubbing of all 25 videos
-  state.scrubVideo = document.createElement('video');
-  state.scrubVideo.muted = true;
-  state.scrubVideo.playsInline = true;
-  state.scrubVideo.preload = 'auto';
 
   /* ==========================================================================
      DOM CACHE
@@ -62,47 +44,19 @@
     canvas: document.getElementById('motion-canvas'),
     heroSection: document.getElementById('kinetic-hero'),
     hudActiveFile: document.getElementById('hud-active-file'),
+    hudChapterCount: document.getElementById('hud-chapter-count'),
     hudFrameCount: document.getElementById('hud-frame-count'),
     hudFps: document.getElementById('hud-fps'),
     hudCoherence: document.getElementById('hud-coherence'),
-    hudStep: document.getElementById('hud-step'),
-    cards: [
-      document.getElementById('card-seq-1'),
-      document.getElementById('card-seq-2'),
-      document.getElementById('card-seq-3')
-    ],
-    heroStrip: document.getElementById('hero-sequence-strip'),
-    heroPrevBtn: document.getElementById('hero-prev-btn'),
-    heroNextBtn: document.getElementById('hero-next-btn'),
-    heroSeqCounter: document.getElementById('hero-seq-counter'),
+    cardBadge: document.getElementById('card-badge'),
+    cardTitle: document.getElementById('card-title'),
+    cardDesc: document.getElementById('card-desc'),
+    chapterButtonsRow: document.getElementById('chapter-buttons-row'),
     manualSlider: document.getElementById('manual-frame-slider'),
     scrubTrackFill: document.getElementById('scrub-track-progress'),
     audioToggleBtn: document.getElementById('audio-toggle-btn'),
     audioBtnLabel: document.getElementById('audio-btn-label'),
-    marqueeRowA: document.getElementById('marquee-row-a'),
-    marqueeRowB: document.getElementById('marquee-row-b'),
-    cinemaGrid: document.getElementById('cinema-grid'),
-    filterTabs: document.querySelectorAll('.filter-tab'),
-    // Modal elements
-    modal: document.getElementById('cinema-modal'),
-    modalBackdrop: document.getElementById('modal-backdrop'),
-    modalCloseBtn: document.getElementById('modal-close-btn'),
-    modalVideo: document.getElementById('modal-video-element'),
-    modalTitle: document.getElementById('modal-title'),
-    modalCategory: document.getElementById('modal-category'),
-    modalPlayBtn: document.getElementById('modal-play-btn'),
-    modalScrub: document.getElementById('modal-scrub-input'),
-    modalTimeTag: document.getElementById('modal-time-tag'),
-    rateBtns: document.querySelectorAll('.rate-btn'),
-    // Inspector elements
-    inspectorVideo: document.getElementById('inspector-video-player'),
-    inspectorPlayBtn: document.getElementById('inspector-play-btn'),
-    inspectorTimeline: document.getElementById('inspector-timeline'),
-    inspectorTimeReadout: document.getElementById('inspector-time-readout'),
-    inspectorBadge: document.getElementById('inspector-badge-label'),
-    inspectorSelect: document.getElementById('inspector-select-dropdown'),
-    specTitle: document.getElementById('spec-title'),
-    specCategory: document.getElementById('spec-category')
+    manifestTableBody: document.getElementById('manifest-table-body')
   };
 
   const ctx = dom.canvas.getContext('2d', { alpha: false });
@@ -112,17 +66,18 @@
      ========================================================================== */
   function getFrameUrl(index) {
     const padded = String(index).padStart(4, '0');
-    return `${SEQUENCE_CONFIG.dir}${SEQUENCE_CONFIG.prefix}${padded}${SEQUENCE_CONFIG.ext}`;
+    return `${CONFIG.framesDir}${CONFIG.prefix}${padded}${CONFIG.ext}`;
   }
 
   function preloadFrames() {
-    const total = SEQUENCE_CONFIG.totalFrames;
+    const total = CONFIG.totalFrames;
     const initialImg = new Image();
     initialImg.src = getFrameUrl(1);
     initialImg.onload = () => {
       state.images.set(1, initialImg);
       renderFrame(1);
-      // Preload remaining 2..240 frames
+
+      // Preload remaining 2..240 frames in background
       for (let i = 2; i <= total; i++) {
         const img = new Image();
         img.src = getFrameUrl(i);
@@ -143,139 +98,30 @@
   }
 
   function renderFrame(frameIndex) {
-    const cw = dom.canvas.width;
-    const ch = dom.canvas.height;
-
-    ctx.fillStyle = '#07080c';
-    ctx.fillRect(0, 0, cw, ch);
-
-    if (state.isVideoMode && state.scrubVideo && state.scrubVideo.readyState >= 2) {
-      // Draw from active scrub video element
-      const vw = state.scrubVideo.videoWidth || 640;
-      const vh = state.scrubVideo.videoHeight || 360;
-      const hRatio = cw / vw;
-      const vRatio = ch / vh;
-      const ratio = Math.max(hRatio, vRatio);
-      const shiftX = (cw - vw * ratio) / 2;
-      const shiftY = (ch - vh * ratio) / 2;
-      ctx.drawImage(state.scrubVideo, 0, 0, vw, vh, shiftX, shiftY, vw * ratio, vh * ratio);
-      return;
-    }
-
-    // Default: draw from WebP frame cache
-    const clampedIndex = Math.min(Math.max(Math.round(frameIndex), 1), SEQUENCE_CONFIG.totalFrames);
+    const clampedIndex = Math.min(Math.max(Math.round(frameIndex), 1), CONFIG.totalFrames);
     const img = state.images.get(clampedIndex);
     if (!img || !img.complete) return;
 
-    const iw = img.naturalWidth || 960;
-    const ih = img.naturalHeight || 540;
+    const cw = dom.canvas.width;
+    const ch = dom.canvas.height;
+    const iw = img.naturalWidth || 800;
+    const ih = img.naturalHeight || 450;
+
+    // Cover scale calculation
     const hRatio = cw / iw;
     const vRatio = ch / ih;
     const ratio = Math.max(hRatio, vRatio);
+
     const centerShiftX = (cw - iw * ratio) / 2;
     const centerShiftY = (ch - ih * ratio) / 2;
+
+    ctx.fillStyle = '#07080c';
+    ctx.fillRect(0, 0, cw, ch);
     ctx.drawImage(img, 0, 0, iw, ih, centerShiftX, centerShiftY, iw * ratio, ih * ratio);
   }
 
   /* ==========================================================================
-     HERO SEQUENCE SWITCHER (25 VIDEOS FROM COURSE DIRECTORY)
-     ========================================================================== */
-  function buildHeroSequenceDrawer() {
-    if (!dom.heroStrip || !state.videosData || state.videosData.length === 0) return;
-
-    dom.heroStrip.innerHTML = state.videosData.map((item, idx) => `
-      <div class="seq-chip ${idx === state.activeHeroIndex ? 'active' : ''}" data-index="${idx}" role="tab" tabindex="0" aria-label="Switch to ${item.sourceFile}">
-        <img class="seq-chip-thumb" src="${item.thumbnail}" alt="${item.title}" loading="lazy">
-        <div class="seq-chip-text">
-          <span class="seq-chip-id">SEQ ${String(idx + 1).padStart(2, '0')}</span>
-          <span class="seq-chip-name">${item.code || item.title}</span>
-        </div>
-      </div>
-    `).join('');
-
-    dom.heroStrip.querySelectorAll('.seq-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        const idx = parseInt(chip.dataset.index, 10);
-        switchHeroVideo(idx);
-      });
-      chip.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          const idx = parseInt(chip.dataset.index, 10);
-          switchHeroVideo(idx);
-        }
-      });
-    });
-
-    if (dom.heroPrevBtn) {
-      dom.heroPrevBtn.addEventListener('click', () => {
-        const nextIdx = (state.activeHeroIndex - 1 + state.videosData.length) % state.videosData.length;
-        switchHeroVideo(nextIdx);
-      });
-    }
-
-    if (dom.heroNextBtn) {
-      dom.heroNextBtn.addEventListener('click', () => {
-        const nextIdx = (state.activeHeroIndex + 1) % state.videosData.length;
-        switchHeroVideo(nextIdx);
-      });
-    }
-
-    updateHeroDrawerUI();
-  }
-
-  function switchHeroVideo(index) {
-    if (!state.videosData || !state.videosData[index]) return;
-    state.activeHeroIndex = index;
-    const item = state.videosData[index];
-
-    if (index === 0) {
-      // Sequence 01: uses 240 WebP frame sequence
-      state.isVideoMode = false;
-      renderFrame(state.currentFrame);
-    } else {
-      // Sequence 02..25: uses optimized video stream scrub
-      state.isVideoMode = true;
-      state.scrubVideo.src = item.file;
-      state.scrubVideo.currentTime = (state.scrollProgress * 10);
-      state.scrubVideo.onseeked = () => {
-        renderFrame(state.currentFrame);
-      };
-      state.scrubVideo.load();
-    }
-
-    updateHeroDrawerUI();
-    updateTelemetry(state.currentFrame);
-  }
-
-  function updateHeroDrawerUI() {
-    if (!state.videosData || state.videosData.length === 0) return;
-    const item = state.videosData[state.activeHeroIndex];
-
-    if (dom.hudActiveFile && item) {
-      dom.hudActiveFile.textContent = item.sourceFile;
-    }
-
-    if (dom.heroSeqCounter) {
-      const cur = String(state.activeHeroIndex + 1).padStart(2, '0');
-      const tot = String(state.videosData.length).padStart(2, '0');
-      dom.heroSeqCounter.textContent = `${cur} / ${tot}`;
-    }
-
-    if (dom.heroStrip) {
-      dom.heroStrip.querySelectorAll('.seq-chip').forEach((chip, idx) => {
-        if (idx === state.activeHeroIndex) {
-          chip.classList.add('active');
-          chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } else {
-          chip.classList.remove('active');
-        }
-      });
-    }
-  }
-
-  /* ==========================================================================
-     SCROLL INTERACTION & LERP SMOOTHING
+     SCROLL ENGINE & CHAPTER SYNCHRONIZATION
      ========================================================================== */
   function onScroll() {
     if (!dom.heroSection) return;
@@ -286,70 +132,95 @@
     const scrolled = -rect.top;
     const rawProgress = Math.min(Math.max(scrolled / scrollDistance, 0), 1);
     state.scrollProgress = rawProgress;
-    state.targetFrame = 1 + rawProgress * (SEQUENCE_CONFIG.totalFrames - 1);
-
-    if (state.isVideoMode && state.scrubVideo && state.scrubVideo.duration) {
-      state.scrubVideo.currentTime = rawProgress * state.scrubVideo.duration;
-    }
+    state.targetFrame = 1 + rawProgress * (CONFIG.totalFrames - 1);
   }
 
   function updateTelemetry(frameNum) {
-    const total = SEQUENCE_CONFIG.totalFrames;
-    const normalized = (frameNum - 1) / (total - 1);
-    const stepNum = Math.min(Math.max(Math.ceil(normalized * 24), 1), 24);
-    const coherencePct = (98.0 + normalized * 1.8).toFixed(1);
+    const total = CONFIG.totalFrames;
+    const clamped = Math.min(Math.max(Math.round(frameNum), 1), total);
+    const normalized = (clamped - 1) / (total - 1);
 
+    // Calculate current chapter index (0..19)
+    const chapterIdx = Math.min(Math.floor((clamped - 1) / CONFIG.framesPerChapter), CONFIG.totalChapters - 1);
+    const chapter = state.chapters[chapterIdx] || {
+      chapter: chapterIdx + 1,
+      filename: `gemini_generated_video_${chapterIdx + 1}.mp4`,
+      startFrame: chapterIdx * 12 + 1,
+      endFrame: (chapterIdx + 1) * 12
+    };
+
+    state.activeChapterIndex = chapterIdx;
+
+    // Update HUD telemetry
+    if (dom.hudActiveFile) {
+      dom.hudActiveFile.textContent = chapter.filename;
+    }
+    if (dom.hudChapterCount) {
+      const cur = String(chapter.chapter).padStart(2, '0');
+      dom.hudChapterCount.textContent = `${cur} / 20`;
+    }
     if (dom.hudFrameCount) {
-      const curStr = String(Math.round(frameNum)).padStart(4, '0');
-      const totStr = String(total).padStart(4, '0');
-      dom.hudFrameCount.textContent = `${curStr} / ${totStr}`;
+      const cur = String(clamped).padStart(4, '0');
+      dom.hudFrameCount.textContent = `${cur} / 0240`;
     }
     if (dom.hudFps) {
       dom.hudFps.textContent = '24.000 FPS';
     }
     if (dom.hudCoherence) {
-      dom.hudCoherence.textContent = `${coherencePct}%`;
-    }
-    if (dom.hudStep) {
-      dom.hudStep.textContent = `STEP ${String(stepNum).padStart(2, '0')}`;
+      const pct = (98.2 + ((clamped % 12) / 12) * 1.6).toFixed(1);
+      dom.hudCoherence.textContent = `${pct}%`;
     }
 
-    // Update narrative cards
-    let activeSeqIndex = 0;
-    const threshold1 = total * 0.33;
-    const threshold2 = total * 0.66;
-    if (frameNum >= threshold2) {
-      activeSeqIndex = 2;
-    } else if (frameNum >= threshold1) {
-      activeSeqIndex = 1;
+    // Update floating narrative card
+    if (dom.cardBadge) {
+      dom.cardBadge.textContent = `CHAPTER ${String(chapter.chapter).padStart(2, '0')} OF 20 // VEO EXTRACTION`;
+    }
+    if (dom.cardTitle) {
+      dom.cardTitle.textContent = chapter.filename;
+    }
+    if (dom.cardDesc) {
+      dom.cardDesc.textContent = `Sequential frames ${String(chapter.startFrame).padStart(4, '0')} - ${String(chapter.endFrame).padStart(4, '0')} extracted via FFmpeg into WebP from ${chapter.filename}. Scroll down to progress to the next video.`;
     }
 
-    dom.cards.forEach((card, idx) => {
-      if (card) {
-        if (idx === activeSeqIndex) {
-          card.classList.add('active');
+    // Update chapter button highlight
+    if (dom.chapterButtonsRow) {
+      dom.chapterButtonsRow.querySelectorAll('.ch-btn').forEach((btn, idx) => {
+        if (idx === chapterIdx) {
+          btn.classList.add('active');
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         } else {
-          card.classList.remove('active');
+          btn.classList.remove('active');
         }
-      }
-    });
+      });
+    }
 
     // Update manual scrubber slider
     if (dom.manualSlider) {
-      dom.manualSlider.value = Math.round(frameNum);
+      dom.manualSlider.value = clamped;
     }
     if (dom.scrubTrackFill) {
       const pct = (normalized * 100).toFixed(2);
       dom.scrubTrackFill.style.width = `${pct}%`;
     }
 
-    // Audio modulation if active
+    // Update manifest table row highlight
+    if (dom.manifestTableBody) {
+      dom.manifestTableBody.querySelectorAll('tr').forEach((row, idx) => {
+        if (idx === chapterIdx) {
+          row.classList.add('current-ch');
+        } else {
+          row.classList.remove('current-ch');
+        }
+      });
+    }
+
+    // Audio modulation
     if (state.audioActive && state.audioNodes) {
       updateAudioModulation(normalized);
     }
   }
 
-  // Linear Interpolation Render Loop (60 FPS)
+  // 60 FPS Sub-pixel Linear Interpolation Render Loop
   function animationLoop() {
     const diff = state.targetFrame - state.currentFrame;
     if (Math.abs(diff) > 0.05) {
@@ -361,28 +232,71 @@
   }
 
   /* ==========================================================================
-     MANUAL SCRUBBER
+     INTERACTIVE CONTROLS & CHAPTER NAVIGATION
      ========================================================================== */
-  function initHeroControls() {
+  function initControls() {
+    // Populate 20 chapter buttons
+    if (dom.chapterButtonsRow) {
+      dom.chapterButtonsRow.innerHTML = state.chapters.map((ch, idx) => `
+        <button class="ch-btn ${idx === 0 ? 'active' : ''}" data-chapter="${ch.chapter}" data-frame="${ch.startFrame}" type="button" aria-label="Jump to Video ${ch.chapter}: ${ch.filename}">
+          CH ${String(ch.chapter).padStart(2, '0')}
+        </button>
+      `).join('');
+
+      dom.chapterButtonsRow.querySelectorAll('.ch-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetFrame = parseInt(btn.dataset.frame, 10) || 1;
+          jumpToFrame(targetFrame);
+        });
+      });
+    }
+
+    // Manual slider
     if (dom.manualSlider) {
-      dom.manualSlider.max = SEQUENCE_CONFIG.totalFrames;
+      dom.manualSlider.max = CONFIG.totalFrames;
       dom.manualSlider.addEventListener('input', (e) => {
         const val = parseInt(e.target.value, 10);
-        state.targetFrame = val;
-        const scrollDistance = dom.heroSection.offsetHeight - window.innerHeight;
-        const targetScrollY = dom.heroSection.offsetTop + ((val - 1) / (SEQUENCE_CONFIG.totalFrames - 1)) * scrollDistance;
-        window.scrollTo({ top: targetScrollY, behavior: 'auto' });
-
-        if (state.isVideoMode && state.scrubVideo && state.scrubVideo.duration) {
-          const progress = (val - 1) / (SEQUENCE_CONFIG.totalFrames - 1);
-          state.scrubVideo.currentTime = progress * state.scrubVideo.duration;
-        }
+        jumpToFrame(val);
       });
     }
   }
 
+  function jumpToFrame(frameIndex) {
+    state.targetFrame = frameIndex;
+    if (!dom.heroSection) return;
+    const scrollDistance = dom.heroSection.offsetHeight - window.innerHeight;
+    const targetScrollY = dom.heroSection.offsetTop + ((frameIndex - 1) / (CONFIG.totalFrames - 1)) * scrollDistance;
+    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+  }
+
   /* ==========================================================================
-     WEB AUDIO SYNTHESIS ENGINE (GENERATIVE CINEMATIC AMBIENT SYNTH)
+     MANIFEST TABLE BUILDER
+     ========================================================================== */
+  function buildManifestTable() {
+    if (!dom.manifestTableBody || !state.chapters || state.chapters.length === 0) return;
+
+    dom.manifestTableBody.innerHTML = state.chapters.map((ch) => `
+      <tr data-chapter="${ch.chapter}">
+        <td class="font-mono text-cyan"><strong>CH ${String(ch.chapter).padStart(2, '0')}</strong></td>
+        <td class="font-mono"><strong>${ch.filename}</strong></td>
+        <td class="font-mono">frame_${String(ch.startFrame).padStart(4, '0')}.webp &ndash; frame_${String(ch.endFrame).padStart(4, '0')}.webp</td>
+        <td class="font-mono">12 Frames</td>
+        <td class="font-mono">WebP (800x450, Q80)</td>
+        <td><span class="badge-verified">EXTRACTED // PASS</span></td>
+      </tr>
+    `).join('');
+
+    dom.manifestTableBody.querySelectorAll('tr').forEach((row) => {
+      row.addEventListener('click', () => {
+        const chNum = parseInt(row.dataset.chapter, 10);
+        const ch = state.chapters.find((c) => c.chapter === chNum);
+        if (ch) jumpToFrame(ch.startFrame);
+      });
+    });
+  }
+
+  /* ==========================================================================
+     WEB AUDIO SYNTHESIS ENGINE (AMBIENT DRONE)
      ========================================================================== */
   function initAudioEngine() {
     if (dom.audioToggleBtn) {
@@ -403,22 +317,18 @@
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       state.audioCtx = new AudioContext();
 
-      // Master gain
       const masterGain = state.audioCtx.createGain();
       masterGain.gain.setValueAtTime(0.12, state.audioCtx.currentTime);
       masterGain.connect(state.audioCtx.destination);
 
-      // Warm cinematic sub drone oscillator
       const oscLow = state.audioCtx.createOscillator();
       oscLow.type = 'sine';
       oscLow.frequency.setValueAtTime(65.41, state.audioCtx.currentTime);
 
-      // Ambient harmonic oscillator
       const oscHigh = state.audioCtx.createOscillator();
       oscHigh.type = 'triangle';
       oscHigh.frequency.setValueAtTime(130.81, state.audioCtx.currentTime);
 
-      // Resonant Lowpass Filter
       const filter = state.audioCtx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(320, state.audioCtx.currentTime);
@@ -438,7 +348,7 @@
       dom.audioToggleBtn.setAttribute('aria-pressed', 'true');
       dom.audioBtnLabel.textContent = 'AMBIENT SYNTH: ACTIVE';
     } catch (err) {
-      console.warn('Web Audio synthesis initialization deferred:', err);
+      console.warn('Web Audio synthesis deferred:', err);
     }
   }
 
@@ -469,324 +379,6 @@
   }
 
   /* ==========================================================================
-     VIDEO SHOWCASE & STREAM REEL (25 VIDEOS FROM COURSE ASSETS)
-     ========================================================================== */
-  async function loadVideosCatalog() {
-    if (window.KREYNTIX_DATA && Array.isArray(window.KREYNTIX_DATA)) {
-      state.videosData = window.KREYNTIX_DATA;
-      finishCatalogLoad();
-      return;
-    }
-
-    try {
-      const resp = await fetch('videos.json');
-      state.videosData = await resp.json();
-      finishCatalogLoad();
-    } catch (err) {
-      console.error('Failed to fetch videos.json:', err);
-    }
-  }
-
-  function finishCatalogLoad() {
-    buildHeroSequenceDrawer();
-    buildMarqueeRibbons();
-    renderCinemaGrid();
-    populateInspectorDropdown();
-    if (state.videosData.length > 0) {
-      setInspectorClip(state.videosData[0]);
-    }
-  }
-
-  function buildMarqueeRibbons() {
-    if (!state.videosData || state.videosData.length === 0) return;
-
-    const rowAItems = state.videosData.slice(0, 12);
-    const rowBItems = state.videosData.slice(12, 25);
-
-    function createCards(items) {
-      return items.map((item) => `
-        <div class="stream-card" data-video-id="${item.id}" role="button" tabindex="0" aria-label="Open ${item.title}">
-          <video class="stream-video" src="${item.file}" muted loop playsinline></video>
-          <div class="stream-card-overlay">
-            <span class="stream-tag">${item.category.toUpperCase()}</span>
-            <span class="stream-title">${item.title}</span>
-            <span class="stream-file font-mono">${item.sourceFile}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    if (dom.marqueeRowA) {
-      dom.marqueeRowA.innerHTML = createCards(rowAItems) + createCards(rowAItems);
-    }
-    if (dom.marqueeRowB) {
-      dom.marqueeRowB.innerHTML = createCards(rowBItems) + createCards(rowBItems);
-    }
-
-    // Autoplay marquee videos on hover & click to open modal
-    document.querySelectorAll('.stream-card').forEach((card) => {
-      const vid = card.querySelector('video');
-      card.addEventListener('mouseenter', () => {
-        if (vid) vid.play().catch(() => {});
-      });
-      card.addEventListener('mouseleave', () => {
-        if (vid) {
-          vid.pause();
-          vid.currentTime = 0;
-        }
-      });
-      card.addEventListener('click', () => {
-        const id = parseInt(card.dataset.videoId, 10);
-        const item = state.videosData.find((v) => v.id === id);
-        if (item) openCinemaModal(item);
-      });
-    });
-  }
-
-  function renderCinemaGrid() {
-    if (!dom.cinemaGrid) return;
-
-    const filtered = state.activeCategory === 'all'
-      ? state.videosData
-      : state.videosData.filter((v) => v.category === state.activeCategory);
-
-    dom.cinemaGrid.innerHTML = filtered.map((item) => `
-      <article class="video-card" data-video-id="${item.id}" role="button" tabindex="0" aria-label="Play ${item.title}">
-        <div class="video-card-thumb-wrap">
-          <img class="video-card-thumb" src="${item.thumbnail}" alt="${item.title}" loading="lazy">
-          <video class="video-card-hover-video" src="${item.file}" muted loop playsinline></video>
-          <span class="card-badge-category">${item.category.toUpperCase()}</span>
-          <span class="card-badge-duration">${item.duration}</span>
-        </div>
-        <div class="video-card-body">
-          <h3 class="video-card-title">${item.title}</h3>
-          <div class="video-card-specs">
-            <span class="font-mono text-cyan">${item.sourceFile}</span>
-            <span>&bull;</span>
-            <span>${item.fps} FPS</span>
-            <span>&bull;</span>
-            <span>${item.resolution}</span>
-          </div>
-        </div>
-      </article>
-    `).join('');
-
-    // Attach hover video autoplay & click modal trigger
-    dom.cinemaGrid.querySelectorAll('.video-card').forEach((card) => {
-      const vid = card.querySelector('.video-card-hover-video');
-      card.addEventListener('mouseenter', () => {
-        if (vid) vid.play().catch(() => {});
-      });
-      card.addEventListener('mouseleave', () => {
-        if (vid) {
-          vid.pause();
-          vid.currentTime = 0;
-        }
-      });
-      card.addEventListener('click', () => {
-        const id = parseInt(card.dataset.videoId, 10);
-        const item = state.videosData.find((v) => v.id === id);
-        if (item) openCinemaModal(item);
-      });
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          const id = parseInt(card.dataset.videoId, 10);
-          const item = state.videosData.find((v) => v.id === id);
-          if (item) openCinemaModal(item);
-        }
-      });
-    });
-  }
-
-  function initCategoryFilters() {
-    dom.filterTabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        dom.filterTabs.forEach((t) => {
-          t.classList.remove('active');
-          t.setAttribute('aria-selected', 'false');
-        });
-        tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
-        state.activeCategory = tab.dataset.filter;
-        renderCinemaGrid();
-      });
-    });
-  }
-
-  /* ==========================================================================
-     CINEMA THEATER MODAL ENGINE
-     ========================================================================== */
-  function initCinemaModal() {
-    if (dom.modalBackdrop) {
-      dom.modalBackdrop.addEventListener('click', closeCinemaModal);
-    }
-    if (dom.modalCloseBtn) {
-      dom.modalCloseBtn.addEventListener('click', closeCinemaModal);
-    }
-
-    if (dom.modalPlayBtn) {
-      dom.modalPlayBtn.addEventListener('click', toggleModalPlay);
-    }
-
-    if (dom.modalVideo) {
-      dom.modalVideo.addEventListener('timeupdate', updateModalTimeline);
-      dom.modalVideo.addEventListener('ended', () => {
-        dom.modalPlayBtn.textContent = 'REPLAY';
-      });
-    }
-
-    if (dom.modalScrub) {
-      dom.modalScrub.addEventListener('input', (e) => {
-        if (!dom.modalVideo || !dom.modalVideo.duration) return;
-        const pct = parseFloat(e.target.value);
-        dom.modalVideo.currentTime = (pct / 100) * dom.modalVideo.duration;
-      });
-    }
-
-    dom.rateBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        dom.rateBtns.forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        const rate = parseFloat(btn.dataset.rate);
-        if (dom.modalVideo) dom.modalVideo.playbackRate = rate;
-      });
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (dom.modal && dom.modal.classList.contains('open')) {
-        if (e.key === 'Escape') {
-          closeCinemaModal();
-        } else if (e.key === ' ' && e.target.tagName !== 'INPUT') {
-          e.preventDefault();
-          toggleModalPlay();
-        }
-      }
-    });
-  }
-
-  function openCinemaModal(item) {
-    state.activeModalVideo = item;
-    dom.modalTitle.textContent = `${item.title} (${item.sourceFile})`;
-    dom.modalCategory.textContent = item.category.toUpperCase();
-    dom.modalVideo.src = item.file;
-    dom.modalVideo.playbackRate = 1.0;
-
-    dom.rateBtns.forEach((btn) => {
-      if (btn.dataset.rate === '1') {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    dom.modal.classList.add('open');
-    dom.modal.setAttribute('aria-hidden', 'false');
-    dom.modalVideo.play().catch(() => {});
-    dom.modalPlayBtn.textContent = 'PAUSE';
-  }
-
-  function closeCinemaModal() {
-    dom.modal.classList.remove('open');
-    dom.modal.setAttribute('aria-hidden', 'true');
-    if (dom.modalVideo) {
-      dom.modalVideo.pause();
-      dom.modalVideo.src = '';
-    }
-  }
-
-  function toggleModalPlay() {
-    if (!dom.modalVideo) return;
-    if (dom.modalVideo.paused) {
-      dom.modalVideo.play().catch(() => {});
-      dom.modalPlayBtn.textContent = 'PAUSE';
-    } else {
-      dom.modalVideo.pause();
-      dom.modalPlayBtn.textContent = 'PLAY';
-    }
-  }
-
-  function updateModalTimeline() {
-    if (!dom.modalVideo || !dom.modalVideo.duration) return;
-    const cur = dom.modalVideo.currentTime;
-    const dur = dom.modalVideo.duration;
-    const pct = (cur / dur) * 100;
-    dom.modalScrub.value = pct;
-
-    const curSec = String(Math.floor(cur % 60)).padStart(2, '0');
-    const curMin = String(Math.floor(cur / 60)).padStart(2, '0');
-    const durSec = String(Math.floor(dur % 60)).padStart(2, '0');
-    const durMin = String(Math.floor(dur / 60)).padStart(2, '0');
-    dom.modalTimeTag.textContent = `${curMin}:${curSec} / ${durMin}:${durSec}`;
-  }
-
-  /* ==========================================================================
-     FRAME INSPECTOR LAB ENGINE (25 VIDEOS FROM COURSE ASSETS)
-     ========================================================================== */
-  function populateInspectorDropdown() {
-    if (!dom.inspectorSelect) return;
-    dom.inspectorSelect.innerHTML = state.videosData.map((item) => `
-      <option value="${item.id}">Clip ${String(item.id).padStart(2, '0')}: ${item.sourceFile} // ${item.category}</option>
-    `).join('');
-
-    dom.inspectorSelect.addEventListener('change', (e) => {
-      const id = parseInt(e.target.value, 10);
-      const item = state.videosData.find((v) => v.id === id);
-      if (item) setInspectorClip(item);
-    });
-
-    if (dom.inspectorPlayBtn) {
-      dom.inspectorPlayBtn.addEventListener('click', toggleInspectorPlay);
-    }
-
-    if (dom.inspectorVideo) {
-      dom.inspectorVideo.addEventListener('timeupdate', updateInspectorTimeline);
-    }
-
-    if (dom.inspectorTimeline) {
-      dom.inspectorTimeline.addEventListener('input', (e) => {
-        if (!dom.inspectorVideo || !dom.inspectorVideo.duration) return;
-        const pct = parseFloat(e.target.value);
-        dom.inspectorVideo.currentTime = (pct / 100) * dom.inspectorVideo.duration;
-      });
-    }
-  }
-
-  function setInspectorClip(item) {
-    if (!dom.inspectorVideo) return;
-    dom.inspectorVideo.src = item.file;
-    dom.inspectorBadge.textContent = `${item.sourceFile} // LOADED`;
-    dom.specTitle.textContent = `${item.title} (${item.sourceFile})`;
-    dom.specCategory.textContent = item.category;
-    dom.inspectorVideo.play().catch(() => {});
-  }
-
-  function toggleInspectorPlay() {
-    if (!dom.inspectorVideo) return;
-    if (dom.inspectorVideo.paused) {
-      dom.inspectorVideo.play().catch(() => {});
-      dom.inspectorPlayBtn.textContent = 'PAUSE';
-    } else {
-      dom.inspectorVideo.pause();
-      dom.inspectorPlayBtn.textContent = 'PLAY';
-    }
-  }
-
-  function updateInspectorTimeline() {
-    if (!dom.inspectorVideo || !dom.inspectorVideo.duration) return;
-    const cur = dom.inspectorVideo.currentTime;
-    const dur = dom.inspectorVideo.duration;
-    const pct = (cur / dur) * 100;
-    dom.inspectorTimeline.value = pct;
-
-    const curSec = String(Math.floor(cur % 60)).padStart(2, '0');
-    const curMin = String(Math.floor(cur / 60)).padStart(2, '0');
-    const durSec = String(Math.floor(dur % 60)).padStart(2, '0');
-    const durMin = String(Math.floor(dur / 60)).padStart(2, '0');
-    dom.inspectorTimeReadout.textContent = `${curMin}:${curSec} / ${durMin}:${durSec}`;
-  }
-
-  /* ==========================================================================
      INITIALIZATION LIFECYCLE
      ========================================================================== */
   function init() {
@@ -795,12 +387,11 @@
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    initHeroControls();
+    initControls();
+    buildManifestTable();
     initAudioEngine();
-    initCategoryFilters();
-    initCinemaModal();
-    loadVideosCatalog();
 
+    updateTelemetry(1);
     requestAnimationFrame(animationLoop);
   }
 

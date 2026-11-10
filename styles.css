@@ -250,7 +250,7 @@ body {
    ========================================================================== */
 .hero-scroll-container {
   position: relative;
-  height: 450vh; /* Scroll scrub track height */
+  height: 1200vh; /* 1200vh deep scroll track for 20 sequential videos */
   background: #000;
 }
 
@@ -398,8 +398,8 @@ body {
   z-index: 20;
 }
 
-/* 25-Video Sequence Drawer & Switcher */
-.hero-sequence-drawer {
+/* 20-Video Sequential Chapter Strip */
+.chapter-strip-container {
   background: var(--color-bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -411,14 +411,14 @@ body {
   gap: 8px;
 }
 
-.drawer-header {
+.chapter-strip-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
 }
 
-.drawer-label {
+.chapter-strip-title {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -426,102 +426,128 @@ body {
   color: var(--color-accent-cyan);
 }
 
-.drawer-nav {
+.chapter-strip-hint {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  letter-spacing: 1px;
+}
+
+.chapter-buttons-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.drawer-nav-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.drawer-nav-btn:hover {
-  background: var(--color-accent-cyan);
-  color: #07080c;
-  border-color: var(--color-accent-cyan);
-}
-
-.drawer-counter {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.hero-sequence-strip {
-  display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   padding-bottom: 4px;
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent-cyan) rgba(255, 255, 255, 0.05);
 }
 
-.hero-sequence-strip::-webkit-scrollbar {
+.chapter-buttons-row::-webkit-scrollbar {
   height: 4px;
 }
 
-.hero-sequence-strip::-webkit-scrollbar-thumb {
+.chapter-buttons-row::-webkit-scrollbar-thumb {
   background: var(--color-accent-cyan);
   border-radius: 2px;
 }
 
-.seq-chip {
+.ch-btn {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   background: rgba(14, 17, 26, 0.85);
   border: 1px solid var(--color-border);
-  padding: 4px 8px;
+  color: var(--color-text-secondary);
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.seq-chip:hover {
+.ch-btn:hover {
   border-color: var(--color-accent-cyan);
   background: rgba(0, 240, 255, 0.08);
-}
-
-.seq-chip.active {
-  border-color: var(--color-accent-cyan);
-  background: rgba(0, 240, 255, 0.16);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
-}
-
-.seq-chip-thumb {
-  width: 32px;
-  height: 20px;
-  object-fit: cover;
-  border-radius: 3px;
-}
-
-.seq-chip-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.seq-chip-id {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--color-accent-cyan);
-}
-
-.seq-chip-name {
-  font-size: 11px;
-  font-weight: 600;
   color: #fff;
-  white-space: nowrap;
+}
+
+.ch-btn.active {
+  border-color: var(--color-accent-cyan);
+  background: var(--color-accent-cyan);
+  color: #07080c;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+.hud-metric-highlight {
+  border-color: var(--color-accent-cyan) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+}
+
+.hud-metric-highlight .metric-value {
+  color: #fff !important;
+  font-size: 13px !important;
+}
+
+/* 20-Video Manifest Table */
+.manifest-section {
+  padding: var(--space-4xl) 0;
+  background: #090b10;
+  border-top: 1px solid var(--color-border);
+}
+
+.manifest-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
+
+.manifest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.manifest-table th {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.manifest-table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--color-text-secondary);
+}
+
+.manifest-table tr:hover td {
+  background: rgba(0, 240, 255, 0.04);
+  color: #fff;
+}
+
+.manifest-table tr.current-ch td {
+  background: rgba(0, 240, 255, 0.12);
+  color: #fff;
+}
+
+.badge-verified {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-accent-emerald);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 /* Manual Scrubber Bar */
