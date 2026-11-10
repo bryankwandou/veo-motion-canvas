@@ -44,19 +44,23 @@
     canvas: document.getElementById('motion-canvas'),
     heroSection: document.getElementById('kinetic-hero'),
     hudActiveFile: document.getElementById('hud-active-file'),
-    hudChapterCount: document.getElementById('hud-chapter-count'),
     hudFrameCount: document.getElementById('hud-frame-count'),
     hudFps: document.getElementById('hud-fps'),
     hudCoherence: document.getElementById('hud-coherence'),
+    hudLatentVector: document.getElementById('hud-latent-vector'),
     cardBadge: document.getElementById('card-badge'),
     cardTitle: document.getElementById('card-title'),
     cardDesc: document.getElementById('card-desc'),
+    narrativeTabs: document.getElementById('narrative-tabs'),
     chapterButtonsRow: document.getElementById('chapter-buttons-row'),
+    btnPrev: document.getElementById('btn-prev-chapter'),
+    btnNext: document.getElementById('btn-next-chapter'),
+    navChapterIndicator: document.getElementById('nav-chapter-indicator'),
     manualSlider: document.getElementById('manual-frame-slider'),
     scrubTrackFill: document.getElementById('scrub-track-progress'),
     audioToggleBtn: document.getElementById('audio-toggle-btn'),
     audioBtnLabel: document.getElementById('audio-btn-label'),
-    manifestTableBody: document.getElementById('manifest-table-body')
+    exploreReelBtn: document.getElementById('explore-reel-btn')
   };
 
   const ctx = dom.canvas.getContext('2d', { alpha: false });
@@ -146,7 +150,10 @@
       chapter: chapterIdx + 1,
       filename: `gemini_generated_video_${chapterIdx + 1}.mp4`,
       startFrame: chapterIdx * 12 + 1,
-      endFrame: (chapterIdx + 1) * 12
+      endFrame: (chapterIdx + 1) * 12,
+      badge: `SEQUENCE ${String(chapterIdx + 1).padStart(2, '0')} // HIGH-FIDELITY RENDER`,
+      title: `LOSSLESS WEBP STREAMING`,
+      description: `Native 24 FPS raster frames extracted via FFmpeg into optimized WebP sequence buffers.`
     };
 
     state.activeChapterIndex = chapterIdx;
@@ -154,10 +161,6 @@
     // Update HUD telemetry
     if (dom.hudActiveFile) {
       dom.hudActiveFile.textContent = chapter.filename;
-    }
-    if (dom.hudChapterCount) {
-      const cur = String(chapter.chapter).padStart(2, '0');
-      dom.hudChapterCount.textContent = `${cur} / 20`;
     }
     if (dom.hudFrameCount) {
       const cur = String(clamped).padStart(4, '0');
@@ -170,16 +173,36 @@
       const pct = (98.2 + ((clamped % 12) / 12) * 1.6).toFixed(1);
       dom.hudCoherence.textContent = `${pct}%`;
     }
+    if (dom.hudLatentVector) {
+      const step = String(Math.min(Math.floor((clamped - 1) / 10) + 1, 24)).padStart(2, '0');
+      dom.hudLatentVector.textContent = `STEP ${step}`;
+    }
+
+    // Update Chapter Indicator
+    if (dom.navChapterIndicator) {
+      const cur = String(chapter.chapter).padStart(2, '0');
+      dom.navChapterIndicator.textContent = `${cur} / 20`;
+    }
 
     // Update floating narrative card
     if (dom.cardBadge) {
-      dom.cardBadge.textContent = `CHAPTER ${String(chapter.chapter).padStart(2, '0')} OF 20 // VEO EXTRACTION`;
+      dom.cardBadge.textContent = chapter.badge;
     }
     if (dom.cardTitle) {
-      dom.cardTitle.textContent = chapter.filename;
+      dom.cardTitle.textContent = chapter.title;
     }
     if (dom.cardDesc) {
-      dom.cardDesc.textContent = `Sequential frames ${String(chapter.startFrame).padStart(4, '0')} - ${String(chapter.endFrame).padStart(4, '0')} extracted via FFmpeg into WebP from ${chapter.filename}. Scroll down to progress to the next video.`;
+      dom.cardDesc.textContent = chapter.description;
+    }
+
+    // Update tabs inside narrative card (01 LATENT INIT, 02 TEMPORAL FLOW, 03 CINEMA RENDER)
+    if (dom.narrativeTabs) {
+      const intraFrame = (clamped - 1) % 12;
+      const tabIdx = Math.min(Math.floor(intraFrame / 4), 2);
+      dom.narrativeTabs.querySelectorAll('.n-tab').forEach((tab, tIdx) => {
+        if (tIdx === tabIdx) tab.classList.add('active');
+        else tab.classList.remove('active');
+      });
     }
 
     // Update chapter button highlight
@@ -203,17 +226,6 @@
       dom.scrubTrackFill.style.width = `${pct}%`;
     }
 
-    // Update manifest table row highlight
-    if (dom.manifestTableBody) {
-      dom.manifestTableBody.querySelectorAll('tr').forEach((row, idx) => {
-        if (idx === chapterIdx) {
-          row.classList.add('current-ch');
-        } else {
-          row.classList.remove('current-ch');
-        }
-      });
-    }
-
     // Audio modulation
     if (state.audioActive && state.audioNodes) {
       updateAudioModulation(normalized);
@@ -235,11 +247,15 @@
      INTERACTIVE CONTROLS & CHAPTER NAVIGATION
      ========================================================================== */
   function initControls() {
-    // Populate 20 chapter buttons
+    // Populate 20 chapter buttons with thumbnail, SEQ and code
     if (dom.chapterButtonsRow) {
       dom.chapterButtonsRow.innerHTML = state.chapters.map((ch, idx) => `
-        <button class="ch-btn ${idx === 0 ? 'active' : ''}" data-chapter="${ch.chapter}" data-frame="${ch.startFrame}" type="button" aria-label="Jump to Video ${ch.chapter}: ${ch.filename}">
-          CH ${String(ch.chapter).padStart(2, '0')}
+        <button class="ch-btn ${idx === 0 ? 'active' : ''}" data-chapter="${ch.chapter}" data-frame="${ch.startFrame}" type="button" aria-label="Sequence ${ch.chapter}: ${ch.filename}">
+          <img class="ch-thumb" src="frames/frame_${String(ch.startFrame).padStart(4, '0')}.webp" alt="Thumb ${ch.chapter}" loading="lazy">
+          <div class="ch-meta">
+            <span class="ch-seq">SEQ ${String(ch.chapter).padStart(2, '0')}</span>
+            <span class="ch-code">${ch.code}</span>
+          </div>
         </button>
       `).join('');
 
@@ -248,6 +264,28 @@
           const targetFrame = parseInt(btn.dataset.frame, 10) || 1;
           jumpToFrame(targetFrame);
         });
+      });
+    }
+
+    // Prev / Next Chapter Buttons
+    if (dom.btnPrev) {
+      dom.btnPrev.addEventListener('click', () => {
+        const prevIdx = Math.max(state.activeChapterIndex - 1, 0);
+        jumpToChapter(prevIdx);
+      });
+    }
+    if (dom.btnNext) {
+      dom.btnNext.addEventListener('click', () => {
+        const nextIdx = Math.min(state.activeChapterIndex + 1, state.chapters.length - 1);
+        jumpToChapter(nextIdx);
+      });
+    }
+
+    // Explore Reel CTA Button
+    if (dom.exploreReelBtn) {
+      dom.exploreReelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        jumpToFrame(25);
       });
     }
 
@@ -261,38 +299,19 @@
     }
   }
 
+  function jumpToChapter(chapterIndex) {
+    const ch = state.chapters[chapterIndex];
+    if (ch) {
+      jumpToFrame(ch.startFrame);
+    }
+  }
+
   function jumpToFrame(frameIndex) {
     state.targetFrame = frameIndex;
     if (!dom.heroSection) return;
     const scrollDistance = dom.heroSection.offsetHeight - window.innerHeight;
     const targetScrollY = dom.heroSection.offsetTop + ((frameIndex - 1) / (CONFIG.totalFrames - 1)) * scrollDistance;
     window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-  }
-
-  /* ==========================================================================
-     MANIFEST TABLE BUILDER
-     ========================================================================== */
-  function buildManifestTable() {
-    if (!dom.manifestTableBody || !state.chapters || state.chapters.length === 0) return;
-
-    dom.manifestTableBody.innerHTML = state.chapters.map((ch) => `
-      <tr data-chapter="${ch.chapter}">
-        <td class="font-mono text-cyan"><strong>CH ${String(ch.chapter).padStart(2, '0')}</strong></td>
-        <td class="font-mono"><strong>${ch.filename}</strong></td>
-        <td class="font-mono">frame_${String(ch.startFrame).padStart(4, '0')}.webp &ndash; frame_${String(ch.endFrame).padStart(4, '0')}.webp</td>
-        <td class="font-mono">12 Frames</td>
-        <td class="font-mono">WebP (800x450, Q80)</td>
-        <td><span class="badge-verified">EXTRACTED // PASS</span></td>
-      </tr>
-    `).join('');
-
-    dom.manifestTableBody.querySelectorAll('tr').forEach((row) => {
-      row.addEventListener('click', () => {
-        const chNum = parseInt(row.dataset.chapter, 10);
-        const ch = state.chapters.find((c) => c.chapter === chNum);
-        if (ch) jumpToFrame(ch.startFrame);
-      });
-    });
   }
 
   /* ==========================================================================
@@ -388,7 +407,6 @@
     window.addEventListener('scroll', onScroll, { passive: true });
 
     initControls();
-    buildManifestTable();
     initAudioEngine();
 
     updateTelemetry(1);

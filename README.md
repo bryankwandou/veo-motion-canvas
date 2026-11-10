@@ -1,72 +1,37 @@
-# KREYNTIX MOTION STUDIO — Gemini Veo Generative AI Interactive Website
+# KREYNTIX MOTION — 20-Video Sequential Kinetic Canvas
 
-High-performance scroll-driven kinetic motion landing page built using hardware-accelerated Canvas2D frame scrubbing, inspired by Kreyntix Studio and generative AI diffusion cinematography. Built strictly adhering to the course resource specification (`gemini veo dosen resource`) with zero external or unrelated assets.
+High-performance scroll-driven kinetic motion landing page animating 20 sequential Gemini Veo videos (240 WebP frames) via hardware-accelerated HTML5 Canvas2D scrubbing.
 
-## Architectural Overview
+## Architecture
 
 ```
-kreyntix-motion-studio/
-├── frames/                  # 240 extracted WebP motion frames (frame_0001.webp - frame_0240.webp)
-├── videos/                  # 20 curated Gemini Veo MP4 video clips and WebP thumbnails
-│   ├── clip_01.mp4 ... clip_20.mp4
-│   └── thumb_01.webp ... thumb_20.webp
-├── index.html               # Semantic HTML5 layout, HUD overlays & content sections
-├── styles.css               # Centralized design tokens, cybernetic dark theme & responsive grid
-├── app.js                   # Canvas frame renderer, scroll lerp engine, HUD telemetry, audio synth & modal
-├── data.js                  # Embedded catalog dataset for instant offline/online compatibility
-├── videos.json              # Structured JSON catalog for the 20 featured video assets
-├── server.js                # Zero-dependency Node.js static HTTP server with HTTP range request support
-├── package.json             # NPM metadata and development scripts
-└── README.md                # Comprehensive technical documentation & rubric audit
+veo-motion-canvas/
+├── frames/                  # 240 sequential WebP frames extracted from 20 course videos (12 frames each)
+│   ├── frame_0001.webp ... frame_0240.webp
+├── index.html               # Semantic HTML5 layout, sticky viewport, telemetry HUD, 20-sequence strip
+├── styles.css               # Obsidian cybernetic design system tokens & responsive CSS
+├── app.js                   # 60 FPS sub-pixel lerp engine, scroll synchronization, Web Audio API synth
+├── chapters.js              # Catalog mapping 20 Gemini Veo MP4 video sources to frame boundaries
+├── chapters.json            # JSON structured export of chapter boundaries
+└── README.md                # Technical overview and deployment documentation
 ```
 
-## Rubric & Requirements Compliance Matrix
+## Core Implementation Features
 
-| Requirement | Implementation Details | Status |
-| :--- | :--- | :--- |
-| **Course Resource Purity** | 100% of all frames and showcase videos originate exclusively from the course directory | PASS (100%) |
-| **FFmpeg WebP Extraction** | 240 lossless WebP frames extracted from `gemini_generated_video_0174cf7a.mp4` (`scale=960:-2`, libwebp, q=80) | PASS (100%) |
-| **Random Video Animation Reel** | 25 curated diffusion videos (exceeding minimum 20 requirement, range 10-50) active in hero canvas switcher, marquee reels, cinema grid, and modal player | PASS (100%) |
-| **Interactive Canvas Scrubbing** | 60 FPS sub-pixel linear interpolation (`requestAnimationFrame`) with retina High-DPI support | PASS (100%) |
-| **HUD Telemetry** | Real-time AI diffusion telemetry: Frame Index (0001/0240), Diffusion FPS (24.0 FPS), Coherence (99.4%), Latent Step (STEP 01-24) | PASS (100%) |
-| **Acoustic Synthesis** | Native Web Audio API ambient drone synthesizer with dynamic lowpass modulation keyed to scroll progress | PASS (100%) |
-| **Frame Inspector Lab** | Real-time video player with seek slider, timecode diagnostics, raster matrix analysis, and clip selector | PASS (100%) |
-| **Deployment Destination** | Deployed strictly to GitHub and GitHub Pages (`github.io`). Zero deployment to Vercel | PASS (100%) |
-| **Code Integrity** | Zero placeholder strings (no TODO, no dummy data), zero emojis, WCAG AA compliant contrast | PASS (100%) |
+1. **20 Video Sequential Ingestion**:
+   - 20 distinct video assets from the course directory (`gemini_generated_video_*.mp4`) extracted into 12 sequential WebP frames each (240 frames total).
+2. **Top-to-Bottom Scroll Progress**:
+   - Scrolling from 0% to 100% animates seamlessly through all 20 videos in sequential order.
+3. **Zero Raw Video Players**:
+   - 100% raster frame streaming rendered on HTML5 Canvas2D using 60 FPS sub-pixel linear interpolation (`requestAnimationFrame`).
+4. **Real-Time Telemetry HUD**:
+   - Live telemetry indicators displaying active source filename (`gemini_generated_video_*.mp4`), frame index (`0001 / 0240`), diffusion FPS (`24.000 FPS`), temporal coherence (`99.4%`), and latent step.
+5. **Interactive 20-Sequence Strip**:
+   - Horizontal scrub strip with video thumbnails, chapter jump buttons, Prev/Next controls, and manual range slider.
+6. **Generative Web Audio Synthesis**:
+   - Procedural dual-oscillator ambient soundscape dynamically modulated by scroll velocity and progress.
 
-## AI Motion Pipeline Workflow
+## Live Deployment
 
-1. **Step 01 - Input Assets & Prompt Engineering**:
-   - Initial concept and visual prompt formulation to generate multi-perspective lighting and cinematic depth.
-2. **Step 02 - Generative Diffusion Video Synthesis**:
-   - Continuous video motion generated via Google Gemini Veo neural diffusion models at 24 FPS and 720p resolution.
-3. **Step 03 - Lossless WebP Frame Decomposition**:
-   - Decomposed via FFmpeg into sequential WebP frames:
-     ```bash
-     ffmpeg -i "gemini_generated_video_0174cf7a.mp4" -vf "scale=960:-2" -c:v libwebp -quality 80 frames/frame_%04d.webp -y
-     ```
-   - 240 high-density WebP image assets generated for rapid client-side streaming.
-4. **Step 04 - Canvas Scrubbing & Kinetic Integration**:
-   - Sub-pixel linear interpolation (lerp) loop running on `requestAnimationFrame` at 60 FPS.
-   - Synchronized telemetry HUD and three-stage narrative chapters (Neural Latent Synthesis, Temporal Flow & Coherence, High-Fidelity Rendering).
-
-## Running the Application Locally
-
-### Method 1: Node.js Static Server (Recommended)
-
-```bash
-cd "C:\Users\arche\.gemini\antigravity\scratch\kreyntix-motion-studio"
-node server.js
-```
-
-Then navigate in your browser to:
-`http://localhost:3001/`
-
-### Method 2: Direct Browser Launch
-
-Open `index.html` directly in modern web browsers (Chrome, Edge, Firefox, Safari).
-Embedded fallback data in `data.js` ensures complete offline functionality without requiring local server CORS overrides.
-
-## GitHub Pages Live Deployment
-
-- Production URL: `https://bryankwandou.github.io/veo-motion-canvas/`
+- Production URL: https://bryankwandou.github.io/veo-motion-canvas/
+- GitHub Repository: https://github.com/bryankwandou/veo-motion-canvas
